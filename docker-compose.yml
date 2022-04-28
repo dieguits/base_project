@@ -1,0 +1,42 @@
+version: "3"
+services:
+
+  db-datahub:
+    container_name: datahub
+    image: postgis/postgis:11-3.1-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 20s
+      timeout: 60s
+      retries: 5
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: datahub
+    volumes:
+      - ./volumes/db_datahub:/var/lib/postgresql/data
+
+  flyway-container:
+    container_name: flyway-container
+    build:
+      context: ./db-datahub/modules/baseline
+      dockerfile: Dockerfile
+    environment:
+      FLYWAY_USER: "postgres"
+      FLYWAY_PASSWORD: "password"
+      FLYWAY_URL: "jdbc:postgresql://db-datahub:5432/datahub"
+    command: -locations=filesystem:/flyway/sql,filesystem:/flyway/test-data -connectRetries=60 migrate
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:4.18
+    restart: always
+    ports:
+      - "8083:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_LISTEN_PORT: 80
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro

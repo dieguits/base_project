@@ -1,0 +1,11 @@
+version: "3"
+services:
+
+  datahub-flyway-core:
+    container_name: datahub-flyway-core
+    extends: datahub-flyway-baseline #datahub-flyway-baseline
+    build:
+      context: ./db-datahub/modules/core
+    depends_on:
+      datahub-flyway-baseline: #datahub-flyway-baseline
+        condition: service_completed_successfully
